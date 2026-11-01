@@ -1,1 +1,1 @@
-# Multi-Domain_Application_of_Mamdani_Fuzzy_Inference_Systems_for_Regression
+# Multi-Domain Application of Mamdani Fuzzy Inference Systems for Regression: A Quantitative and Qualitative Evaluation
