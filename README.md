@@ -1,0 +1,1 @@
+# Multi-Domain_Application_of_Mamdani_Fuzzy_Inference_Systems_for_Regression
