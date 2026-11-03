@@ -7,7 +7,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 def evaluate_regression(y_true, y_pred):
   """Calculează metricile de regresie și returnează un DataFrame (tabel)
-
   cu indicatorii cantitativi de eroare.
   """
   mae = mean_absolute_error(y_true, y_pred)
@@ -50,7 +49,6 @@ def plot_regression_results(y_true, y_pred, title='Real vs. Predicted'):
 
 def plot_membership_functions(fis_engine):
   """Afișează graficele funcțiilor de apartenență pentru toate intrările
-
   și ieșiri din sistemul Mamdani.
   """
   print('--- Generare Grafice Funcții de Apartenență (Antecedente) ---')
@@ -68,7 +66,6 @@ def plot_membership_functions(fis_engine):
 
 def plot_control_surface(simulation, input1_name, input2_name, output_name):
   """Generează suprafața de control 3D (Control Surface Plot)
-
   pentru două variabile de intrare, menținând a treia constantă.
   """
   h_range = np.linspace(20, 150, 30)
@@ -99,4 +96,56 @@ def plot_control_surface(simulation, input1_name, input2_name, output_name):
       '3D Control Surface Plot (HRV vs. Day Strain -> Sleep Performance)'
   )
   fig.colorbar(surf, shrink=0.5, aspect=5)
+  plt.show()
+
+def plot_data_distributions(df, columns=None, figsize=(12, 8)):
+  """Generates a grid of histograms with KDE curves for specified numerical
+  columns to analyze data distribution, skewness, and spread across any dataset.
+  """
+  if columns is None:
+    columns = df.select_dtypes(include=[np.number]).columns.tolist()
+
+  n_cols = len(columns)
+  n_rows = (n_cols + 2) // 3
+  fig, axes = plt.subplots(n_rows, min(n_cols, 3), figsize=figsize)
+  axes = np.array(axes).flatten()
+
+  for i, col in enumerate(columns):
+    if i < len(axes):
+      sns.histplot(df[col], kde=True, ax=axes[i], color='teal', bins=30)
+      axes[i].set_title(f'Distribution: {col}')
+      axes[i].grid(True, alpha=0.3)
+
+  # Hide any unused subplots if grid is larger than column count
+  for j in range(i + 1, len(axes)):
+    fig.delaxes(axes[j])
+
+  plt.tight_layout()
+  plt.show()
+
+
+def plot_universe_percentiles(
+    df, target_col, percentiles=[0.01, 0.25, 0.50, 0.75, 1.0]
+):
+  """Visualizes the distribution of a target/consequent variable alongside
+  its key calculated statistical percentiles. Ideal for mapping out
+  fuzzy linguistic boundaries (e.g., poor, average, excellent) without dead
+  zones.
+  """
+  plt.figure(figsize=(9, 5))
+  sns.histplot(df[target_col], kde=True, color='royalblue', bins=40)
+
+  vals = [df[target_col].quantile(p) for p in percentiles]
+  labels = [f'{int(p*100)}th ({v:.1f})' for p, v in zip(percentiles, vals)]
+  colors = ['red', 'orange', 'green', 'purple', 'brown']
+
+  for val, label, color in zip(vals, labels, colors):
+    plt.axvline(val, color=color, linestyle='--', linewidth=2, label=label)
+
+  plt.title(f'Percentile Calibration Map: {target_col}')
+  plt.xlabel(target_col)
+  plt.ylabel('Density / Count')
+  plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+  plt.grid(True, alpha=0.3)
+  plt.tight_layout()
   plt.show()

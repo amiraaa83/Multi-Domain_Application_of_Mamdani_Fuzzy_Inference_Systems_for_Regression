@@ -11,7 +11,6 @@ def clean_missing_values(df, subset_columns=None):
 
 def scale_to_range(series, original_min, original_max, target_min, target_max):
   """Normalizează o serie numerică la un interval țintă (opțional,
-
   dacă vrei să aduci intrările direct în universul de discurs fuzzy).
   """
   scaled = (series - original_min) / (original_max - original_min)
