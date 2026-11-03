@@ -64,22 +64,44 @@ def plot_membership_functions(fis_engine):
     plt.show()
 
 
-def plot_control_surface(simulation, input1_name, input2_name, output_name):
-  """Generează suprafața de control 3D (Control Surface Plot)
-  pentru două variabile de intrare, menținând a treia constantă.
+def plot_control_surface(
+    simulation,
+    input1_name,
+    input2_name,
+    output_name,
+    x_range,
+    y_range,
+    fixed_inputs=None,
+    labels=None,
+    title=None,
+    resolution=30,
+):
+  """Generează suprafața de control 3D (Control Surface Plot) pentru două
+  variabile de intrare, menținând celelalte intrări la valori fixe.
+
+  x_range / y_range: (min, max) pentru cele două intrări variate.
+  fixed_inputs: dicționar {nume_input: valoare} pentru restul intrărilor.
+  labels: (eticheta_x, eticheta_y, eticheta_z); implicit numele variabilelor.
   """
-  h_range = np.linspace(20, 150, 30)
-  s_range = np.linspace(0, 21, 30)
-  H, S = np.meshgrid(h_range, s_range)
-  Z = np.zeros_like(H)
+  fixed_inputs = fixed_inputs or {}
+  x_label, y_label, z_label = labels or (input1_name, input2_name, output_name)
+  if title is None:
+    fixed_txt = ', '.join(f'{k}={v}' for k, v in fixed_inputs.items())
+    title = f'Control Surface: {x_label} vs. {y_label} -> {z_label}'
+    if fixed_txt:
+      title += f' ({fixed_txt})'
 
-  wake_fixed = 1.0  # Valoare fixă pentru wake_ups (puține treziri)
+  x_vals = np.linspace(x_range[0], x_range[1], resolution)
+  y_vals = np.linspace(y_range[0], y_range[1], resolution)
+  X, Y = np.meshgrid(x_vals, y_vals)
+  Z = np.zeros_like(X)
 
-  for i in range(H.shape[0]):
-    for j in range(H.shape[1]):
-      simulation.input[input1_name] = H[i, j]
-      simulation.input[input2_name] = S[i, j]
-      simulation.input['wake_ups'] = wake_fixed
+  for i in range(X.shape[0]):
+    for j in range(X.shape[1]):
+      simulation.input[input1_name] = X[i, j]
+      simulation.input[input2_name] = Y[i, j]
+      for name, value in fixed_inputs.items():
+        simulation.input[name] = value
       try:
         simulation.compute()
         Z[i, j] = simulation.output[output_name]
@@ -88,15 +110,14 @@ def plot_control_surface(simulation, input1_name, input2_name, output_name):
 
   fig = plt.figure(figsize=(10, 7))
   ax = fig.add_subplot(111, projection='3d')
-  surf = ax.plot_surface(H, S, Z, cmap='viridis', edgecolor='none', alpha=0.8)
-  ax.set_xlabel('HRV')
-  ax.set_ylabel('Day Strain')
-  ax.set_zlabel('Sleep Performance')
-  ax.set_title(
-      '3D Control Surface Plot (HRV vs. Day Strain -> Sleep Performance)'
-  )
-  fig.colorbar(surf, shrink=0.5, aspect=5)
+  surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none', alpha=0.8)
+  ax.set_xlabel(x_label)
+  ax.set_ylabel(y_label)
+  ax.set_zlabel(z_label)
+  ax.set_title(title)
+  fig.colorbar(surf, shrink=0.5, aspect=5, label=z_label)
   plt.show()
+
 
 def plot_data_distributions(df, columns=None, figsize=(12, 8)):
   """Generates a grid of histograms with KDE curves for specified numerical
