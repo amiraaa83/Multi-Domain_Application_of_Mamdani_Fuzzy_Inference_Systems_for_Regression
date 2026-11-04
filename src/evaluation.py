@@ -170,3 +170,31 @@ def plot_universe_percentiles(
   plt.grid(True, alpha=0.3)
   plt.tight_layout()
   plt.show()
+
+
+def cross_validate(fit_predict, df, target, cv, groups=None):
+  """Validare încrucișată generică pentru orice model.
+
+  fit_predict(train_df, test_df) -> predicții pentru test_df.
+  cv: un obiect de tip splitter din scikit-learn (KFold, GroupKFold, ...).
+  groups: etichete de grup (de ex. utilizatorul), pentru GroupKFold.
+
+  Returnează (rezumat, predicții_out_of_fold): rezumatul conține media și
+  deviația standard a MAE, RMSE și R2 pe fold-uri.
+  """
+  oof = np.full(len(df), np.nan)
+  rows = []
+  for fold, (train_idx, test_idx) in enumerate(cv.split(df, groups=groups), start=1):
+    train, test = df.iloc[train_idx], df.iloc[test_idx]
+    pred = np.asarray(fit_predict(train, test), dtype=float)
+    oof[test_idx] = pred
+    y = test[target].to_numpy(dtype=float)
+    rows.append({
+        'fold': fold,
+        'MAE': mean_absolute_error(y, pred),
+        'RMSE': np.sqrt(mean_squared_error(y, pred)),
+        'R2': r2_score(y, pred),
+    })
+  folds = pd.DataFrame(rows).set_index('fold')
+  summary = pd.DataFrame({'mean': folds.mean(), 'std': folds.std()})
+  return summary, oof
